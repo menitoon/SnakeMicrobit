@@ -67,9 +67,6 @@ def light_render(canvas : Canvas):
 
 ### CODE ###
 
-
-
-
 class SnakeBody(Sprite):
 
     __slot__ = "canvas_owner", "position", "value", "x", "y"
@@ -151,88 +148,118 @@ def spawn_apple():
     apple = Sprite(canvas, random_position, 9)
 
 
-snake_list = []
-direction = ([0, 1], [-1, 0], [0, -1], [1, 0])
-index_direction = 3
 
-canvas = Canvas()
+def game():
 
-SnakeBody.create_body(2)
-spawn_apple()
-
-#while not (button_a.is_pressed() or button_b.is_pressed()):
-    #pass
-    # wait until button "a" or "b" is pressed
-
-
-has_button_been_pressed = False
-time_passed = running_time()
-LATENCY = 0.2
-index_instance = index_direction
-current_direction = direction[index_direction]
-alive = True
-score = 0
-
-
-print([0][-1])
-
-while alive:
-
-    # USER INPUT
-    if not has_button_been_pressed:
-        
-        if button_a.is_pressed():
-            has_button_been_pressed = True
-            current_direction = get_direction(-1)
-        elif button_b.is_pressed():
-            has_button_been_pressed = True
-            current_direction = get_direction(1)
-    elif not (button_a.is_pressed() and button_b.is_pressed()):
-        has_button_been_pressed = False
+    global snake_list
+    global alive
+    global canvas
+    global score
+    global direction 
+    global index_direction
 
     
-    if (running_time() - time_passed) >= (LATENCY * 60**2):
-        pitch = random.randint(280, 300)
-        for i in range(25):
-            music.pitch(pitch + i * 200, 1, wait=False)
-        move(current_direction)
-        time_passed = running_time()
-        index_direction = direction.index(current_direction)
-        
+    snake_list = []
+    direction = ([0, 1], [-1, 0], [0, -1], [1, 0])
+    index_direction = 3
+
+    canvas = Canvas()
+
+    SnakeBody.create_body(2)
+    spawn_apple()
+
+
     
+    time_passed = running_time()
+    LATENCY = 0.2
+    index_instance = index_direction
+    current_direction = direction[index_direction]
+    alive = True
+    score = 0
+
     light_render(canvas)
 
-# UNUSED
-death_tune = ["C3", "B", "G#", "G", "G#:10"]
 
+    music.play(music.POWER_UP, wait=False)
+    # wait until button "a" or "b" is pressed
+    screen_on = True
+    while not (button_a.is_pressed() or button_b.is_pressed()):
+        if (running_time() - time_passed) > 0.1 * 60**2:
+            screen_on = not screen_on
+            if not screen_on:
+                for snake in snake_list:
+                    display.set_pixel(snake.x, snake.y, 0)
+            else:
+                for snake in snake_list:
+                    display.set_pixel(snake.x, snake.y, snake.value)
+            time_passed = running_time()
+        
+        
 
-for i in range(10):
-    for snake in snake_list:
-        display.set_pixel(snake.x, snake.y, 0)
+    has_button_been_pressed = True
     
-    time.sleep(0.2 - i *0.05)
-    for snake in snake_list:
-        display.set_pixel(snake.x, snake.y, max(5 - i, 0))
-    music.pitch(700 - i * 100, 100)
-    time.sleep(0.2- i *0.05)
+    while alive:
 
+        print(snake_list[0].position)
+        
+        # USER INPUT
+        if not has_button_been_pressed:
+        
+            if button_a.is_pressed():
+                has_button_been_pressed = True
+                current_direction = get_direction(-1)
+            elif button_b.is_pressed():
+                has_button_been_pressed = True
+                current_direction = get_direction(1)
+        elif not (button_a.is_pressed() and button_b.is_pressed()):
+            has_button_been_pressed = False
 
-
-
-display.show(str(score)[0])
-for i in range(4):
-    display.off()
-    time.sleep(0.05 + i *0.02)
-    music.pitch(400 + i * 150, 100)
-    display.on()
-
-    if i > 1:
-        display.show(str(score)[-1])
     
-    time.sleep(0.05 + i *0.02)
+        if (running_time() - time_passed) >= (LATENCY * 60**2):
+            pitch = random.randint(280, 300)
+            for i in range(25):
+                music.pitch(pitch + i * 100, 1, wait=False)
+            move(current_direction)
+            time_passed = running_time()
+            index_direction = direction.index(current_direction)
+        
+    
+        light_render(canvas)
+
+    # UNUSED
+    death_tune = ["C3", "B", "G#", "G", "G#:10"]
 
 
-display.scroll(str(score), delay=125)
+    for i in range(10):
+        for snake in snake_list:
+            display.set_pixel(snake.x, snake.y, 0)
+    
+        time.sleep(0.2 - i *0.05)
+        for snake in snake_list:
+            display.set_pixel(snake.x, snake.y, max(5 - i, 0))
+        music.pitch(700 - i * 100, 100)
+        time.sleep(0.2- i *0.05)
 
-display.clear()
+
+
+
+    display.show(str(score)[0])
+    for i in range(4):
+        display.off()
+        time.sleep(0.05 + i *0.02)
+        music.pitch(400 + i * 150, 100)
+        display.on()
+
+        if i > 1:
+            display.show(str(score)[-1])
+    
+        time.sleep(0.05 - i *0.01)
+
+
+    display.scroll(str(score), delay=125)
+
+    display.clear()
+    game()
+
+game()
 
