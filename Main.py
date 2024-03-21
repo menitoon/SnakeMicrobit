@@ -150,7 +150,7 @@ def spawn_apple():
 
 
 def game():
-
+    
     global snake_list
     global alive
     global canvas
@@ -178,7 +178,7 @@ def game():
     score = 0
 
     light_render(canvas)
-
+    play_wait_sound = False
 
     music.play(music.POWER_UP, wait=False)
     # wait until button "a" or "b" is pressed
@@ -190,18 +190,21 @@ def game():
                 for snake in snake_list:
                     display.set_pixel(snake.x, snake.y, 0)
             else:
+                if play_wait_sound:
+                    music.pitch(random.randint(300, 500), 1, wait=False)
                 for snake in snake_list:
                     display.set_pixel(snake.x, snake.y, snake.value)
             time_passed = running_time()
-        
+
+        if running_time() > 0.5 * 60**2:
+            play_wait_sound = True
         
 
     has_button_been_pressed = True
     
     while alive:
-
-        print(snake_list[0].position)
         
+
         # USER INPUT
         if not has_button_been_pressed:
         
@@ -223,7 +226,6 @@ def game():
             time_passed = running_time()
             index_direction = direction.index(current_direction)
         
-    
         light_render(canvas)
 
     # UNUSED
@@ -244,7 +246,7 @@ def game():
 
 
     display.show(str(score)[0])
-    for i in range(4):
+    for i in range(5):
         display.off()
         time.sleep(0.05 + i *0.02)
         music.pitch(400 + i * 150, 100)
@@ -261,5 +263,46 @@ def game():
     display.clear()
     game()
 
-game()
 
+
+# menu
+select = [
+    "Solo",
+    "Multi",
+    "Music"
+]
+
+has_button_been_pressed = False
+menu_index = 0
+wait_time = len(select[menu_index]) * 0.2
+time_passed = running_time() - 1.1 * 60**2
+
+music.set_tempo(bpm=150)
+
+while True:
+    # USER INPUT
+    if not has_button_been_pressed:
+        
+        if button_a.is_pressed():
+            has_button_been_pressed = True
+            music.play(music.JUMP_UP, wait=False)
+            menu_index += 1
+            if menu_index == len(select):
+                menu_index = 0
+            time_passed -= wait_time * 60 **2
+            wait_time = len(select[menu_index]) * 0.2
+            
+        
+        elif button_b.is_pressed():
+            break
+    
+    elif (not button_a.is_pressed()) and (not button_b.is_pressed()):
+       has_button_been_pressed = False
+    
+    if (running_time() - time_passed) > wait_time * 60**2: 
+        time_passed = running_time()
+        display.scroll(select[menu_index], wait=False, delay=100)
+
+music.reset()
+display.scroll("", delay=1)
+game()
