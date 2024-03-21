@@ -1,6 +1,7 @@
 from microbit import *
 import time
 import random
+import music
 
 class Canvas:
     __slot__ = "render_dict"
@@ -66,11 +67,7 @@ def light_render(canvas : Canvas):
 
 ### CODE ###
 
-snake_list = []
-direction = ([0, 1], [-1, 0], [0, -1], [1, 0])
-index_direction = 3
 
-canvas = Canvas()
 
 
 class SnakeBody(Sprite):
@@ -103,9 +100,16 @@ def get_direction(value : int):
     
 def move(current_direction : list):
 
+    global alive
+    global score
+    
     # define position
     snake_position = snake_list[-1].position
     head_position = [snake_position[0] + current_direction[0], snake_position[1] + current_direction[1]]
+
+    if head_position[0] > 4 or head_position[0] < 0 or head_position[1] > 4 or head_position[1] < 0:
+        alive = False
+        return
     
     # change the color of the old head
     old_head = snake_list[-1]
@@ -123,9 +127,11 @@ def move(current_direction : list):
         render_list.remove(head)
         object = render_list[0]
         if isinstance(object, SnakeBody):
-            pass
+            alive = False
         else:
+            music.play(music.JUMP_UP, wait=False)
             has_apple = True
+            score += 1
             object.kill()
             spawn_apple()
         
@@ -144,6 +150,13 @@ def spawn_apple():
     random_position = random.choice(possible_positions)
     apple = Sprite(canvas, random_position, 9)
 
+
+snake_list = []
+direction = ([0, 1], [-1, 0], [0, -1], [1, 0])
+index_direction = 3
+
+canvas = Canvas()
+
 SnakeBody.create_body(2)
 spawn_apple()
 
@@ -154,13 +167,16 @@ spawn_apple()
 
 has_button_been_pressed = False
 time_passed = running_time()
-LATENCY = 0.25
+LATENCY = 0.2
 index_instance = index_direction
 current_direction = direction[index_direction]
+alive = True
+score = 0
 
 
+print([0][-1])
 
-while True:
+while alive:
 
     # USER INPUT
     if not has_button_been_pressed:
@@ -176,6 +192,9 @@ while True:
 
     
     if (running_time() - time_passed) >= (LATENCY * 60**2):
+        pitch = random.randint(280, 300)
+        for i in range(25):
+            music.pitch(pitch + i * 200, 1, wait=False)
         move(current_direction)
         time_passed = running_time()
         index_direction = direction.index(current_direction)
@@ -183,4 +202,37 @@ while True:
     
     light_render(canvas)
 
+# UNUSED
+death_tune = ["C3", "B", "G#", "G", "G#:10"]
+
+
+for i in range(10):
+    for snake in snake_list:
+        display.set_pixel(snake.x, snake.y, 0)
+    
+    time.sleep(0.2 - i *0.05)
+    for snake in snake_list:
+        display.set_pixel(snake.x, snake.y, max(5 - i, 0))
+    music.pitch(700 - i * 100, 100)
+    time.sleep(0.2- i *0.05)
+
+
+
+
+display.show(str(score)[0])
+for i in range(4):
+    display.off()
+    time.sleep(0.05 + i *0.02)
+    music.pitch(400 + i * 150, 100)
+    display.on()
+
+    if i > 1:
+        display.show(str(score)[-1])
+    
+    time.sleep(0.05 + i *0.02)
+
+
+display.scroll(str(score), delay=125)
+
+display.clear()
 
