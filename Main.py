@@ -126,7 +126,8 @@ def move(current_direction : list):
         if isinstance(object, SnakeBody):
             alive = False
         else:
-            music.play(music.JUMP_UP, wait=False)
+            if is_music:
+                music.play(music.JUMP_UP, wait=False)
             has_apple = True
             score += 1
             object.kill()
@@ -157,7 +158,7 @@ def game():
     global score
     global direction 
     global index_direction
-
+    
     
     snake_list = []
     direction = ([0, 1], [-1, 0], [0, -1], [1, 0])
@@ -179,8 +180,8 @@ def game():
 
     light_render(canvas)
     play_wait_sound = False
-
-    music.play(music.POWER_UP, wait=False)
+    if is_music:
+        music.play(music.POWER_UP, wait=False)
     # wait until button "a" or "b" is pressed
     screen_on = True
     while not (button_a.is_pressed() or button_b.is_pressed()):
@@ -190,7 +191,7 @@ def game():
                 for snake in snake_list:
                     display.set_pixel(snake.x, snake.y, 0)
             else:
-                if play_wait_sound:
+                if play_wait_sound and is_music:
                     music.pitch(random.randint(300, 500), 1, wait=False)
                 for snake in snake_list:
                     display.set_pixel(snake.x, snake.y, snake.value)
@@ -219,9 +220,10 @@ def game():
 
     
         if (running_time() - time_passed) >= (LATENCY * 60**2):
-            pitch = random.randint(280, 300)
-            for i in range(25):
-                music.pitch(pitch + i * 100, 1, wait=False)
+            if is_music:
+                pitch = random.randint(280, 300)
+                for i in range(25):
+                    music.pitch(pitch + i * 100, 1, wait=False)
             move(current_direction)
             time_passed = running_time()
             index_direction = direction.index(current_direction)
@@ -239,7 +241,8 @@ def game():
         time.sleep(0.2 - i *0.05)
         for snake in snake_list:
             display.set_pixel(snake.x, snake.y, max(5 - i, 0))
-        music.pitch(700 - i * 100, 100)
+        if is_music:
+            music.pitch(700 - i * 100, 100)
         time.sleep(0.2- i *0.05)
 
 
@@ -249,7 +252,8 @@ def game():
     for i in range(5):
         display.off()
         time.sleep(0.05 + i *0.02)
-        music.pitch(400 + i * 150, 100)
+        if is_music:
+            music.pitch(400 + i * 150, 100)
         display.on()
 
         if i > 1:
@@ -279,13 +283,17 @@ time_passed = running_time() - 1.1 * 60**2
 
 music.set_tempo(bpm=150)
 
+is_music = False
+
 while True:
     # USER INPUT
     if not has_button_been_pressed:
         
         if button_a.is_pressed():
+            
             has_button_been_pressed = True
-            music.play(music.JUMP_UP, wait=False)
+            if is_music:
+                music.play(music.JUMP_UP, wait=False)
             menu_index += 1
             if menu_index == len(select):
                 menu_index = 0
@@ -294,7 +302,15 @@ while True:
             
         
         elif button_b.is_pressed():
-            break
+            has_button_been_pressed = True
+            if menu_index == 2:
+                is_music = not is_music
+                if is_music:
+                    music.play(music.JUMP_UP, wait=False)
+                else:
+                    music.play(music.JUMP_DOWN, wait=False)
+            else:
+                break
     
     elif (not button_a.is_pressed()) and (not button_b.is_pressed()):
        has_button_been_pressed = False
