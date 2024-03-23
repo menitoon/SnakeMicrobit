@@ -56,6 +56,8 @@ class Sprite:
 
 def light_render(canvas : Canvas):
     render_dict = canvas.render_dict
+    string_render = "R"
+    
     for x in range(5):
         for y in range(5):
             if (x, y) in render_dict:
@@ -68,6 +70,10 @@ def light_render(canvas : Canvas):
             # if led is supposed to be off but isn't put it off
             elif display.get_pixel(x, y) != 0:
                 display.set_pixel(x, y, 0)
+                
+            string_render += str(display.get_pixel(x, y))
+
+    return string_render
 
 ### CODE ###
 
@@ -154,7 +160,7 @@ def spawn_apple():
 
 
 
-def game():
+def game(multiplayer=False):
 
     global snake_list
     global alive
@@ -242,8 +248,8 @@ def game():
             move(current_direction)
             time_passed = running_time()
             index_direction = direction.index(current_direction)
-        
-        light_render(canvas)
+            
+        radio.send(light_render(canvas))
 
     # UNUSED
     death_tune = ["C3", "B", "G#", "G", "G#:10"]
@@ -297,25 +303,45 @@ def get_session_id():
     id = 0
     for i in str(current_time):
         id += int(i)
-    
-    return str(id)[0]
+    return str(id)[-1]
 
 def multiplayer():
     display.scroll("", delay=1)
     #display.scroll("waiting for opponent", loop=True)
     radio.on()
+
+    time_passed = running_time()
+    id = "0"
     while True:
-        id = get_session_id()
+        print("Looking ...")
+        if (running_time() - time_passed) > 0.1 * 60**2:
+            time_passed = running_time()
+            id = get_session_id()
         radio.send(id)
         information = radio.receive()
         if not information is None:
-            if id > information:
-                print("we command")
-            else:
-                print("they command")
-        break
+            if id != information:
+                break
+
     
-    
+    if id > information:
+        game(multiplayer=True)
+    else:
+        # viewer
+        
+        while True:
+            screen = radio.receive()
+            if not screen is None:
+                if screen.startswith("R"):
+                    
+                    print(screen)
+                    light_value_index = 1
+                    for x in range(5):
+                        for y in range(5):
+                            light_value = screen[light_value_index]
+                            display.set_pixel(x, y, int(light_value))
+                            light_value_index += 1
+        
 
 # menu
 def menu():
