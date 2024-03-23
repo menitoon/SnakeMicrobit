@@ -56,7 +56,7 @@ class Sprite:
 
 def light_render(canvas : Canvas):
     render_dict = canvas.render_dict
-    string_render = "R"
+    
     
     for x in range(5):
         for y in range(5):
@@ -70,10 +70,17 @@ def light_render(canvas : Canvas):
             # if led is supposed to be off but isn't put it off
             elif display.get_pixel(x, y) != 0:
                 display.set_pixel(x, y, 0)
-                
-            string_render += str(display.get_pixel(x, y))
 
+def get_render_string():
+    string_render = "R"
+    for x in range(5):
+        for y in range(5):
+            string_render += str(display.get_pixel(x, y))
     return string_render
+
+def send_multiplayer_update(is_multiplayer : bool):
+    if is_multiplayer:
+        radio.send(get_render_string())
 
 ### CODE ###
 
@@ -104,7 +111,7 @@ def get_direction(value : int):
     elif instance_direction < 0:
        instance_direction = 3 
     return direction[instance_direction]
-    
+
 def move(current_direction : list):
 
     global alive
@@ -202,11 +209,13 @@ def game(multiplayer=False):
             if not screen_on:
                 for snake in snake_list:
                     display.set_pixel(snake.x, snake.y, 0)
+                send_multiplayer_update(multiplayer)
             else:
                 if play_wait_sound and is_music:
                     music.pitch(random.randint(300, 500), 1, wait=False)
                 for snake in snake_list:
                     display.set_pixel(snake.x, snake.y, snake.value)
+                send_multiplayer_update(multiplayer)
             time_passed = running_time()
 
         if button_b.is_pressed() and not has_button_been_pressed:
@@ -249,7 +258,9 @@ def game(multiplayer=False):
             time_passed = running_time()
             index_direction = direction.index(current_direction)
             
-        radio.send(light_render(canvas))
+        light_render(canvas)
+        # stream the screen
+        send_multiplayer_update(multiplayer)
 
     # UNUSED
     death_tune = ["C3", "B", "G#", "G", "G#:10"]
@@ -258,10 +269,11 @@ def game(multiplayer=False):
     for i in range(10):
         for snake in snake_list:
             display.set_pixel(snake.x, snake.y, 0)
-    
+        send_multiplayer_update(multiplayer)
         time.sleep(0.2 - i *0.05)
         for snake in snake_list:
             display.set_pixel(snake.x, snake.y, max(5 - i, 0))
+        send_multiplayer_update(multiplayer)
         if is_music:
             music.pitch(700 - i * 100, 100)
         time.sleep(0.2- i *0.05)
@@ -270,21 +282,25 @@ def game(multiplayer=False):
     display.show(str(score)[0])
     for i in range(5):
         display.off()
+        send_multiplayer_update(multiplayer)
         time.sleep(0.05 + i *0.02)
         if is_music:
             music.pitch(400 + i * 150, 100)
         display.on()
-
+        send_multiplayer_update(multiplayer)
         if i > 1:
             display.show(str(score)[-1])
     
         time.sleep(0.05 - i *0.01)
 
 
-    display.scroll(str(score), delay=125)
-
+    display.scroll(str(score), delay=125, wait=False)
+    
+    time_passed = running_time()
+    while (running_time() - time_passed) < 0.5 * 60 ** 2:
+        send_multiplayer_update(multiplayer)
     display.clear()
-    game()
+    game(multiplayer)
 
 def sound_settings():
     global is_music
@@ -313,8 +329,8 @@ def multiplayer():
     time_passed = running_time()
     id = "0"
     while True:
-        print("Looking ...")
-        if (running_time() - time_passed) > 0.1 * 60**2:
+        print("Looking...")
+        if (running_time() - time_passed) > 0.25 * 60**2:
             time_passed = running_time()
             id = get_session_id()
         radio.send(id)
