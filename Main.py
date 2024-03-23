@@ -291,6 +291,32 @@ def sound_settings():
     file.write("1" if is_music else "0")
     file.close()
 
+
+def get_session_id():
+    current_time = running_time()
+    id = 0
+    for i in str(current_time):
+        id += int(i)
+    
+    return str(id)[0]
+
+def multiplayer():
+    display.scroll("", delay=1)
+    #display.scroll("waiting for opponent", loop=True)
+    radio.on()
+    while True:
+        id = get_session_id()
+        radio.send(id)
+        information = radio.receive()
+        if not information is None:
+            if id > information:
+                print("we command")
+            else:
+                print("they command")
+        break
+    
+    
+
 # menu
 def menu():
 
@@ -303,7 +329,7 @@ def menu():
     ]
     function_select = {
         0 : game,
-        1 : game,
+        1 : multiplayer,
         2 : sound_settings
     }
     
@@ -334,7 +360,6 @@ def menu():
         is_music = True
     
     
-    
     while True:
         
         # USER INPUT
@@ -357,7 +382,6 @@ def menu():
                 function_select[menu_index]()
                 music.set_tempo(bpm=150)
                 
-            #print(open("is_music.txt").read(), " : CONTENT")
         
         elif (not button_a.is_pressed()) and (not button_b.is_pressed()):
            has_button_been_pressed = False
