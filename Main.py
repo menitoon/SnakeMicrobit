@@ -261,8 +261,6 @@ def game():
         time.sleep(0.2- i *0.05)
 
 
-
-
     display.show(str(score)[0])
     for i in range(5):
         display.off()
@@ -286,7 +284,7 @@ def sound_settings():
     global is_music
     is_music = not is_music
     if is_music:
-        music.play(music.JUMP_UP)
+        music.play(music.RINGTONE)
     else:
         music.play(music.JUMP_DOWN)
     file = open("is_music.txt", "w")
@@ -314,7 +312,7 @@ def menu():
     wait_time = len(select[menu_index]) * 0.2
     time_passed = running_time() - 1.1 * 60**2
 
-    music.set_tempo(bpm=150)
+    music.set_tempo(bpm=180)
     print(os.listdir())
     
     is_music = open("is_music.txt", "w")
@@ -357,7 +355,7 @@ def menu():
             elif button_b.is_pressed():
                 has_button_been_pressed = True
                 function_select[menu_index]()
-                       
+                music.set_tempo(bpm=150)
                 
             #print(open("is_music.txt").read(), " : CONTENT")
         
