@@ -2,6 +2,10 @@ from microbit import *
 import time
 import random
 import music
+import os
+import radio
+
+
 
 class Canvas:
     __slot__ = "render_dict"
@@ -151,14 +155,16 @@ def spawn_apple():
 
 
 def game():
-    
+
     global snake_list
     global alive
     global canvas
     global score
     global direction 
     global index_direction
-    
+
+    music.reset()
+    display.scroll("", delay=1)
     
     snake_list = []
     direction = ([0, 1], [-1, 0], [0, -1], [1, 0])
@@ -169,8 +175,6 @@ def game():
     SnakeBody.create_body(2)
     spawn_apple()
 
-
-    
     time_passed = running_time()
     LATENCY = 0.2
     index_instance = index_direction
@@ -178,13 +182,15 @@ def game():
     alive = True
     score = 0
 
+    has_button_been_pressed = True
+
     light_render(canvas)
     play_wait_sound = False
     if is_music:
         music.play(music.POWER_UP, wait=False)
     # wait until button "a" or "b" is pressed
     screen_on = True
-    while not (button_a.is_pressed() or button_b.is_pressed()):
+    while not (button_a.is_pressed()):
         if (running_time() - time_passed) > 0.1 * 60**2:
             screen_on = not screen_on
             if not screen_on:
@@ -197,15 +203,24 @@ def game():
                     display.set_pixel(snake.x, snake.y, snake.value)
             time_passed = running_time()
 
+        if button_b.is_pressed() and not has_button_been_pressed:
+            return
+        if (not button_b.is_pressed()) and (not button_a.is_pressed()):
+            has_button_been_pressed = False
+        
         if running_time() > 0.5 * 60**2:
             play_wait_sound = True
-        
 
+    
+
+    
+    del screen_on
+    del play_wait_sound
+    
     has_button_been_pressed = True
     
     while alive:
         
-
         # USER INPUT
         if not has_button_been_pressed:
         
@@ -267,58 +282,91 @@ def game():
     display.clear()
     game()
 
-
+def sound_settings():
+    global is_music
+    is_music = not is_music
+    if is_music:
+        music.play(music.JUMP_UP)
+    else:
+        music.play(music.JUMP_DOWN)
+    file = open("is_music.txt", "w")
+    file.write("1" if is_music else "0")
+    file.close()
 
 # menu
-select = [
-    "Solo",
-    "Multi",
-    "Music"
-]
+def menu():
 
-has_button_been_pressed = False
-menu_index = 0
-wait_time = len(select[menu_index]) * 0.2
-time_passed = running_time() - 1.1 * 60**2
+    global is_music
+    
+    select = [
+        "Solo",
+        "Multi",
+        "Music"
+    ]
+    function_select = {
+        0 : game,
+        1 : game,
+        2 : sound_settings
+    }
+    
+    has_button_been_pressed = False
+    menu_index = 0
+    wait_time = len(select[menu_index]) * 0.2
+    time_passed = running_time() - 1.1 * 60**2
 
-music.set_tempo(bpm=150)
-
-is_music = False
-
-while True:
-    # USER INPUT
-    if not has_button_been_pressed:
+    music.set_tempo(bpm=150)
+    print(os.listdir())
+    
+    is_music = open("is_music.txt", "w")
+    is_music = open("is_music.txt", "r")
+    
+    print(is_music.read(), " : STARTUP CONTENT")
+    
+    if is_music.read() == "":
+        print("Create a file")
+        is_music = open("is_music.txt", "w")
+        is_music.write("1")
+        is_music.close()
+        is_music = True
+    elif is_music.read() == "0":
+        print("No music chosen")
+        is_music = False
+    else:
+        print("THIS OPTION")
+        is_music = True
+    
+    
+    
+    while True:
         
-        if button_a.is_pressed():
+        # USER INPUT
+        if not has_button_been_pressed:
             
-            has_button_been_pressed = True
-            if is_music:
-                music.play(music.JUMP_UP, wait=False)
-            menu_index += 1
-            if menu_index == len(select):
-                menu_index = 0
-            time_passed -= wait_time * 60 **2
-            wait_time = len(select[menu_index]) * 0.2
-            
-        
-        elif button_b.is_pressed():
-            has_button_been_pressed = True
-            if menu_index == 2:
-                is_music = not is_music
+            if button_a.is_pressed():
+                
+                has_button_been_pressed = True
                 if is_music:
                     music.play(music.JUMP_UP, wait=False)
-                else:
-                    music.play(music.JUMP_DOWN, wait=False)
-            else:
-                break
-    
-    elif (not button_a.is_pressed()) and (not button_b.is_pressed()):
-       has_button_been_pressed = False
-    
-    if (running_time() - time_passed) > wait_time * 60**2: 
-        time_passed = running_time()
-        display.scroll(select[menu_index], wait=False, delay=100)
+                menu_index += 1
+                if menu_index == len(select):
+                    menu_index = 0
+                time_passed -= wait_time * 60 **2
+                wait_time = len(select[menu_index]) * 0.2
+                
+            
+            elif button_b.is_pressed():
+                has_button_been_pressed = True
+                function_select[menu_index]()
+                       
+                
+            #print(open("is_music.txt").read(), " : CONTENT")
+        
+        elif (not button_a.is_pressed()) and (not button_b.is_pressed()):
+           has_button_been_pressed = False
+        
+        if (running_time() - time_passed) > wait_time * 60**2: 
+            time_passed = running_time()
+            display.scroll(select[menu_index], wait=False, delay=100)
 
-music.reset()
-display.scroll("", delay=1)
-game()
+
+menu()
