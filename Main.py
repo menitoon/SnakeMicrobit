@@ -227,8 +227,6 @@ def game(multiplayer=False):
             play_wait_sound = True
 
     
-
-    
     del screen_on
     del play_wait_sound
     
@@ -310,8 +308,8 @@ def game(multiplayer=False):
         else:
             # send the score result
             pass
-    
-    game(multiplayer)
+    else:
+        game()
 
 def sound_settings():
     global is_music
@@ -344,43 +342,76 @@ def multiplayer():
     radio.on()
 
     time_passed = running_time()
+    found_status = False
     id = "0"
+    target_id = ""
+    print("Looking...")
+    
     while True:
-        print("Looking...")
-        if (running_time() - time_passed) > 0.25 * 60**2:
-            time_passed = running_time()
-            id = get_session_id()
+        if (running_time() - time_passed) > 0.3 * 60**2:
+            if found_status:
+                break
+            else:
+                time_passed = running_time()
+                id = get_session_id()
+            
         radio.send(id)
         information = radio.receive()
+        
         if not information is None:
-            if id != information:
-                break
+            if id != information and (not found_status):
+                print(str(id), ": ID, INFO : ", str(information))
+                found_status = True
+                target_id = information
+                time_passed = running_time()
 
-    
-    if id > information:
+    print("Found status")
+    if int(id) > int(target_id):
+        print("HOST")
         score_match = {
             "host" : 0,
             "guest" : 0
         }
         is_host = True
-        game(multiplayer=True)
+        while True:
+            game(multiplayer=True)
+            # after ended change config
+            print("round ended now sending info")
+            time.sleep(0.5)
+            time_passed = running_time()
+            while (radio.receive != "GOT_END_ROUND") and (running_time() - time_passed) < 0.2 * 60 ** 2:
+                radio.send("END_ROUND")
+                print("VIEWER STATUS LOADING")
+            print("info send succesfully, now beginning as a viewer")
+            viewer()
         
     else:
+        print("Guest")
         # viewer
-        
         while True:
-            screen = radio.receive()
-            if not screen is None:
-                if screen.startswith("R"):
-                    
-                    print(screen)
-                    light_value_index = 1
-                    for x in range(5):
-                        for y in range(5):
-                            light_value = screen[light_value_index]
-                            display.set_pixel(x, y, int(light_value))
-                            light_value_index += 1
+            viewer()
+            game(multiplayer=True)
         
+def viewer():
+    while True:
+        screen = radio.receive()
+        if not screen is None:
+            if screen.startswith("R"):
+                light_value_index = 1
+                for x in range(5):
+                    for y in range(5):
+                        light_value = screen[light_value_index]
+                        display.set_pixel(x, y, int(light_value))
+                        light_value_index += 1
+            elif screen == "END_ROUND":
+                print("received end of the round")
+                # say you have received the message
+                time_passed = running_time()
+                while (running_time() - time_passed) < (0.5 * 60 ** 2):
+                    radio.send("GOT_END_ROUND")
+                    print("SENDING END")
+                print("start as player now")
+                return
 
 # menu
 def menu():
