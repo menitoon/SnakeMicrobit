@@ -377,11 +377,10 @@ def multiplayer():
             game(multiplayer=True)
             # after ended change config
             print("round ended now sending info")
-            time.sleep(0.5)
+            time.sleep(1.5)
             time_passed = running_time()
             while (radio.receive != "GOT_END_ROUND") and (running_time() - time_passed) < 0.2 * 60 ** 2:
                 radio.send("END_ROUND")
-                print("VIEWER STATUS LOADING")
             print("info send succesfully, now beginning as a viewer")
             viewer()
         
@@ -391,6 +390,15 @@ def multiplayer():
         while True:
             viewer()
             game(multiplayer=True)
+            # after ended change config
+            print("round ended now sending info")
+            time.sleep(1.5)
+            time_passed = running_time()
+            while (radio.receive != "GOT_END_ROUND") and (running_time() - time_passed) < 0.2 * 60 ** 2:
+                radio.send("END_ROUND")
+            print("info send succesfully, now beginning as a viewer")
+            
+            
         
 def viewer():
     while True:
@@ -407,9 +415,9 @@ def viewer():
                 print("received end of the round")
                 # say you have received the message
                 time_passed = running_time()
+                print("sendding that got the end")
                 while (running_time() - time_passed) < (0.5 * 60 ** 2):
                     radio.send("GOT_END_ROUND")
-                    print("SENDING END")
                 print("start as player now")
                 return
 
