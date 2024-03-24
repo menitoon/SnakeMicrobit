@@ -234,18 +234,20 @@ def game(multiplayer=False):
     
     has_button_been_pressed = True
     
+    
     while alive:
         
         # USER INPUT
         if not has_button_been_pressed:
-        
+            
             if button_a.is_pressed():
+                print("changed direction")
                 has_button_been_pressed = True
                 current_direction = get_direction(-1)
             elif button_b.is_pressed():
                 has_button_been_pressed = True
                 current_direction = get_direction(1)
-        elif not (button_a.is_pressed() and button_b.is_pressed()):
+        elif (not button_a.is_pressed()) and (not button_b.is_pressed()):
             has_button_been_pressed = False
 
     
@@ -300,6 +302,15 @@ def game(multiplayer=False):
     while (running_time() - time_passed) < 0.5 * 60 ** 2:
         send_multiplayer_update(multiplayer)
     display.clear()
+
+    if multiplayer:
+        if is_host:
+            score_match["host"] += score
+            print(score_match)
+        else:
+            # send the score result
+            pass
+    
     game(multiplayer)
 
 def sound_settings():
@@ -322,6 +333,12 @@ def get_session_id():
     return str(id)[-1]
 
 def multiplayer():
+
+    global is_host
+    global score_match
+
+    is_host = False
+    
     display.scroll("", delay=1)
     #display.scroll("waiting for opponent", loop=True)
     radio.on()
@@ -341,7 +358,13 @@ def multiplayer():
 
     
     if id > information:
+        score_match = {
+            "host" : 0,
+            "guest" : 0
+        }
+        is_host = True
         game(multiplayer=True)
+        
     else:
         # viewer
         
