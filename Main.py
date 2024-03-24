@@ -367,40 +367,58 @@ def multiplayer():
 
     print("Found status")
     if int(id) > int(target_id):
+        # HOST
         print("HOST")
         score_match = {
             "host" : 0,
             "guest" : 0
         }
         is_host = True
+        phase = 0
         while True:
+            phase += 1
+            print("phase :", phase)
             game(multiplayer=True)
             # after ended change config
             print("round ended now sending info")
             time.sleep(1.5)
             time_passed = running_time()
             while (radio.receive != "GOT_END_ROUND") and (running_time() - time_passed) < 0.2 * 60 ** 2:
-                radio.send("END_ROUND")
+                radio.send("GUEST_END_ROUND")
             print("info send succesfully, now beginning as a viewer")
+            phase += 1
+            print("phase :", phase)
             viewer()
         
     else:
+        phase = 0
         print("Guest")
-        # viewer
+        # GUEST
         while True:
+            phase += 1
+            print("phase :", phase)
             viewer()
+            phase += 1
+            print("phase :", phase)
             game(multiplayer=True)
             # after ended change config
             print("round ended now sending info")
             time.sleep(1.5)
             time_passed = running_time()
             while (radio.receive != "GOT_END_ROUND") and (running_time() - time_passed) < 0.2 * 60 ** 2:
-                radio.send("END_ROUND")
+                radio.send("HOST_END_ROUND")
             print("info send succesfully, now beginning as a viewer")
-            
-            
+            print(radio.receive(), ": RADIO OUT")
         
 def viewer():
+
+    message = ""
+    
+    if is_host:
+        message = "HOST_END_ROUND"
+    else:
+        message = "GUEST_END_ROUND"
+        
     while True:
         screen = radio.receive()
         if not screen is None:
@@ -411,7 +429,8 @@ def viewer():
                         light_value = screen[light_value_index]
                         display.set_pixel(x, y, int(light_value))
                         light_value_index += 1
-            elif screen == "END_ROUND":
+            elif screen == message:
+                print(screen, is_host , " : is_host")
                 print("received end of the round")
                 # say you have received the message
                 time_passed = running_time()
@@ -465,7 +484,7 @@ def menu():
     
     
     while True:
-        
+        radio.off()
         # USER INPUT
         if not has_button_been_pressed:
             
@@ -493,6 +512,6 @@ def menu():
         if (running_time() - time_passed) > wait_time * 60**2: 
             time_passed = running_time()
             display.scroll(select[menu_index], wait=False, delay=100)
-
+        
 
 menu()
