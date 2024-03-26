@@ -352,8 +352,10 @@ def multiplayer():
             if found_status:
                 break
             else:
+                
                 time_passed = running_time()
                 id = get_session_id()
+                print("New id :", id)
             
         radio.send(id)
         information = radio.receive()
@@ -383,7 +385,7 @@ def multiplayer():
             print("round ended now sending info")
             time.sleep(1.5)
             time_passed = running_time()
-            while (radio.receive != "GOT_END_ROUND") and (running_time() - time_passed) < 0.2 * 60 ** 2:
+            while (radio.receive() != "GOT_END_ROUND") and (running_time() - time_passed) < 0.2 * 60 ** 2:
                 radio.send("GUEST_END_ROUND")
             print("info send succesfully, now beginning as a viewer")
             phase += 1
@@ -405,10 +407,9 @@ def multiplayer():
             print("round ended now sending info")
             time.sleep(1.5)
             time_passed = running_time()
-            while (radio.receive != "GOT_END_ROUND") and (running_time() - time_passed) < 0.2 * 60 ** 2:
+            while (radio.receive() != "GOT_END_ROUND") and (running_time() - time_passed) < 0.2 * 60 ** 2:
                 radio.send("HOST_END_ROUND")
             print("info send succesfully, now beginning as a viewer")
-            print(radio.receive(), ": RADIO OUT")
         
 def viewer():
 
@@ -430,12 +431,12 @@ def viewer():
                         display.set_pixel(x, y, int(light_value))
                         light_value_index += 1
             elif screen == message:
-                print(screen, is_host , " : is_host")
+                print(screen, ", HOST? =", is_host)
                 print("received end of the round")
                 # say you have received the message
                 time_passed = running_time()
                 print("sendding that got the end")
-                while (running_time() - time_passed) < (0.5 * 60 ** 2):
+                while (running_time() - time_passed) < (0.3 * 60 ** 2):
                     radio.send("GOT_END_ROUND")
                 print("start as player now")
                 return
