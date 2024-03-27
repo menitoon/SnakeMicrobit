@@ -78,6 +78,7 @@ def get_render_string():
             string_render += str(display.get_pixel(x, y))
     return string_render
 
+
 def send_multiplayer_update(is_multiplayer : bool):
     if is_multiplayer:
         radio.send(get_render_string())
@@ -393,7 +394,6 @@ def multiplayer():
             game(multiplayer=True)
             # after ended change config
             print("round ended now sending info")
-            time.sleep(1.5)
             round_ended(True)
             phase += 1
             print("phase :", phase)
@@ -410,24 +410,14 @@ def multiplayer():
                     opponent_score = int(radio_out)
                     break
         print("Score Received !")
-        print("Sending the result to the Guest(to play sound)")
-        time_passed = running_time()
-        while (running_time() - time_passed) < 0.2 * 60 ** 2:
-            if total_score == opponent_score:
-                radio.send("tie")
-            elif total_score > opponent_score:
-                radio.send("lose")
-            else:
-                radio.send("win")
         print("showing results")
         if total_score == opponent_score:
             if is_music:
                 music.play(music.DADADADUM)
             display.scroll("Tie no one won, both have " + radio_out + "pts", wait=False, delay=105)
             send_update_for(2.5)
-            return
         
-        if total_score > opponent_score:
+        elif total_score > opponent_score:
             if is_music:
                 music.play(music.RINGTONE, wait=False)
             # HOST WINS (PLAYER 1)
@@ -462,29 +452,15 @@ def multiplayer():
             game(multiplayer=True)
             # after ended change config
             print("round ended now sending info")
-            time.sleep(1.5)
             time_passed = running_time()
             round_ended(False)
 
         print("GUEST : MATCH FINISHED")
         time_passed = running_time()
         print("Sending Score")
-        while (running_time() - time_passed) < 0.2* 60**2:
+        while (running_time() - time_passed) < 0.2 * 60**2:
             radio.send(str(total_score))
-        result = ""
-        time_passed = running_time()
-        while radio.receive() == None and (running_time() - time_passed) < 0.3 * 60 ** 2:
-            result = radio.receive()
         print("Entering viewer mode to show result")
-        if result == "tie":
-            if is_music:
-                music.play(music.DADADADUM, wait=False)
-        elif result == "win":
-            if is_music:
-                music.play(music.RINGTONE, wait=False)
-        elif not result is None:
-            if is_music:
-                music.play(music.FUNERAL, wait=False)
         viewer()
             
 def viewer():
