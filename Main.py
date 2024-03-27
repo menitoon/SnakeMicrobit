@@ -5,7 +5,7 @@ import music
 import os
 import radio
 
-
+ROUND = 3
 
 class Canvas:
     __slot__ = "render_dict"
@@ -330,6 +330,16 @@ def get_session_id():
         id += int(i)
     return str(id)[-1]
 
+def round_ended(is_host=True):
+    if is_host:
+        type = "GUEST"
+    else:
+        type = "HOST"
+    time_passed = running_time()
+    while (radio.receive() != "GOT_END_ROUND") and (running_time() - time_passed) < 0.2 * 60 ** 2:
+            radio.send(type + "_END_ROUND")
+    print("info send succesfully, now beginning as a viewer")
+
 def multiplayer():
 
     global is_host
@@ -377,26 +387,25 @@ def multiplayer():
         }
         is_host = True
         phase = 0
-        while True:
+        for r in range(ROUND):
             phase += 1
             print("phase :", phase)
             game(multiplayer=True)
             # after ended change config
             print("round ended now sending info")
             time.sleep(1.5)
-            time_passed = running_time()
-            while (radio.receive() != "GOT_END_ROUND") and (running_time() - time_passed) < 0.2 * 60 ** 2:
-                radio.send("GUEST_END_ROUND")
-            print("info send succesfully, now beginning as a viewer")
+            round_ended(True)
             phase += 1
             print("phase :", phase)
             viewer()
-        
+
+        display.scroll("Match Ended", loop=True)
+    
     else:
         phase = 0
         print("Guest")
         # GUEST
-        while True:
+        for r in range(ROUND):
             phase += 1
             print("phase :", phase)
             viewer()
@@ -407,10 +416,10 @@ def multiplayer():
             print("round ended now sending info")
             time.sleep(1.5)
             time_passed = running_time()
-            while (radio.receive() != "GOT_END_ROUND") and (running_time() - time_passed) < 0.2 * 60 ** 2:
-                radio.send("HOST_END_ROUND")
-            print("info send succesfully, now beginning as a viewer")
-        
+            round_ended(False)
+            
+        display.scroll("Match Ended", loop=True)
+            
 def viewer():
 
     message = ""
