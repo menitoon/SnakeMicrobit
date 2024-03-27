@@ -5,7 +5,7 @@ import music
 import os
 import radio
 
-ROUND = 3
+ROUND = 1
 
 class Canvas:
     __slot__ = "render_dict"
@@ -173,6 +173,7 @@ def game(multiplayer=False):
     global alive
     global canvas
     global score
+    global total_score
     global direction 
     global index_direction
 
@@ -302,12 +303,7 @@ def game(multiplayer=False):
     display.clear()
 
     if multiplayer:
-        if is_host:
-            score_match["host"] += score
-            print(score_match)
-        else:
-            # send the score result
-            pass
+        total_score += score
     else:
         game()
 
@@ -343,7 +339,7 @@ def round_ended(is_host=True):
 def multiplayer():
 
     global is_host
-    global score_match
+    global total_score
 
     is_host = False
     
@@ -381,10 +377,9 @@ def multiplayer():
     if int(id) > int(target_id):
         # HOST
         print("HOST")
-        score_match = {
-            "host" : 0,
-            "guest" : 0
-        }
+
+        total_score = 0
+        
         is_host = True
         phase = 0
         for r in range(ROUND):
@@ -398,13 +393,38 @@ def multiplayer():
             phase += 1
             print("phase :", phase)
             viewer()
-
-        display.scroll("Match Ended", loop=True)
-    
+        print("HOST : MATCH FINISHED")
+        display.clear()
+        opponent_score = 0
+        print("Waiting for Guest to send his total score")
+        #display.scroll("Waiting for the guest to send info...", wait=False)
+        while True:
+            radio_out = radio.receive()
+            if not radio_out is None:
+                if radio_out.isdigit():
+                    opponent_score = int(radio_out)
+                    break
+        print("Score Received !")
+        if total_score == opponent_score:
+            display.scroll("Tie no one won, both have " + radio_out + "pts")
+            return
+        
+        if total_score > opponent_score:
+            # HOST WINS (PLAYER 1)
+            display.scroll("Player 1 wins with " + str(total_score) + "pts")
+            display.scroll("Player 2 :" + radio_out)
+            display.scroll("Difference : " + str(total_score - opponent_score))
+        else:
+            # GUEST WINS (PLAYER 2)
+            display.scroll("Player 2 wins with " + str(opponent_score) + "pts")
+            display.scroll("Player 1 :" + str(total_score))
+            display.scroll("Difference : " + str(opponent_score - total_score))
+        
     else:
         phase = 0
         print("Guest")
         # GUEST
+        total_score = 0
         for r in range(ROUND):
             phase += 1
             print("phase :", phase)
@@ -417,8 +437,14 @@ def multiplayer():
             time.sleep(1.5)
             time_passed = running_time()
             round_ended(False)
-            
-        display.scroll("Match Ended", loop=True)
+
+        print("GUEST : MATCH FINISHED")
+        time_passed = running_time()
+        print("Sending Score")
+        while (running_time() - time_passed) < 0.2* 60**2:
+            radio.send(str(total_score))
+        print("Entering viewer mode to show result")
+        viewer()
             
 def viewer():
 
