@@ -5,7 +5,7 @@ import music
 import os
 import radio
 
-ROUND = 1
+ROUND = 3
 
 class Canvas:
     __slot__ = "render_dict"
@@ -336,6 +336,11 @@ def round_ended(is_host=True):
             radio.send(type + "_END_ROUND")
     print("info send succesfully, now beginning as a viewer")
 
+def send_update_for(time : float):
+    time_passed = running_time()
+    while (running_time() - time_passed) < time * 60 ** 2:
+        send_multiplayer_update(True)
+
 def multiplayer():
 
     global is_host
@@ -405,21 +410,44 @@ def multiplayer():
                     opponent_score = int(radio_out)
                     break
         print("Score Received !")
+        print("Sending the result to the Guest(to play sound)")
+        time_passed = running_time()
+        while (running_time() - time_passed) < 0.2 * 60 ** 2:
+            if total_score == opponent_score:
+                radio.send("tie")
+            elif total_score > opponent_score:
+                radio.send("lose")
+            else:
+                radio.send("win")
+        print("showing results")
         if total_score == opponent_score:
-            display.scroll("Tie no one won, both have " + radio_out + "pts")
+            if is_music:
+                music.play(music.DADADADUM)
+            display.scroll("Tie no one won, both have " + radio_out + "pts", wait=False, delay=105)
+            send_update_for(2.5)
             return
         
         if total_score > opponent_score:
+            if is_music:
+                music.play(music.RINGTONE, wait=False)
             # HOST WINS (PLAYER 1)
-            display.scroll("Player 1 wins with " + str(total_score) + "pts")
-            display.scroll("Player 2 :" + radio_out)
-            display.scroll("Difference : " + str(total_score - opponent_score))
+            display.scroll("Player 1 wins with " + str(total_score) + "pts", wait=False, delay=105)
+            send_update_for(3.5)
+            display.scroll("Player 2 :" + radio_out, wait=False, delay=105)
+            send_update_for(2.8)
+            display.scroll("Difference : " + str(total_score - opponent_score), wait=False, delay=105)
+            send_update_for(2.5)
         else:
+            if is_music:
+                music.play(music.FUNERAL, wait=False)
             # GUEST WINS (PLAYER 2)
-            display.scroll("Player 2 wins with " + str(opponent_score) + "pts")
-            display.scroll("Player 1 :" + str(total_score))
-            display.scroll("Difference : " + str(opponent_score - total_score))
-        
+            display.scroll("Player 2 wins with " + str(opponent_score) + "pts", wait=False, delay=105)
+            send_update_for(3.5)
+            display.scroll("Player 1 :" + str(total_score), wait=False, delay=75)
+            send_update_for(3.5)
+            display.scroll("Difference : " + str(opponent_score - total_score), wait=False, delay=105)
+            send_update_for(3.5)
+        round_ended()
     else:
         phase = 0
         print("Guest")
@@ -443,7 +471,20 @@ def multiplayer():
         print("Sending Score")
         while (running_time() - time_passed) < 0.2* 60**2:
             radio.send(str(total_score))
+        result = ""
+        time_passed = running_time()
+        while radio.receive() == None and (running_time() - time_passed) < 0.3 * 60 ** 2:
+            result = radio.receive()
         print("Entering viewer mode to show result")
+        if result == "tie":
+            if is_music:
+                music.play(music.DADADADUM, wait=False)
+        elif result == "win":
+            if is_music:
+                music.play(music.RINGTONE, wait=False)
+        elif not result is None:
+            if is_music:
+                music.play(music.FUNERAL, wait=False)
         viewer()
             
 def viewer():
