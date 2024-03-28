@@ -315,10 +315,6 @@ def sound_settings():
         music.play(music.RINGTONE)
     else:
         music.play(music.JUMP_DOWN)
-    file = open("is_music.txt", "w")
-    file.write("1" if is_music else "0")
-    file.close()
-
 
 def get_session_id():
     current_time = running_time()
@@ -508,6 +504,8 @@ def menu():
         1 : multiplayer,
         2 : sound_settings
     }
+
+    is_music = True
     
     has_button_been_pressed = False
     menu_index = 0
@@ -516,24 +514,7 @@ def menu():
 
     music.set_tempo(bpm=180)
     print(os.listdir())
-    
-    is_music = open("is_music.txt", "w")
-    is_music = open("is_music.txt", "r")
-    
-    print(is_music.read(), " : STARTUP CONTENT")
-    
-    if is_music.read() == "":
-        print("Create a file")
-        is_music = open("is_music.txt", "w")
-        is_music.write("1")
-        is_music.close()
-        is_music = True
-    elif is_music.read() == "0":
-        print("No music chosen")
-        is_music = False
-    else:
-        print("THIS OPTION")
-        is_music = True
+
     
     
     while True:
