@@ -118,7 +118,7 @@ def move(current_direction : list):
     global alive
     global score
     
-    # define position
+    # defines position => takes last snake object
     snake_position = snake_list[-1].position
     head_position = [snake_position[0] + current_direction[0], snake_position[1] + current_direction[1]]
 
@@ -142,7 +142,9 @@ def move(current_direction : list):
         render_list.remove(head)
         object = render_list[0]
         if isinstance(object, SnakeBody):
-            alive = False
+            tail_position = snake_list[0].position
+            if tail_position != head_position:
+                alive = False
         else:
             if is_music:
                 music.play(music.JUMP_UP, wait=False)
@@ -498,6 +500,7 @@ def menu():
         "Solo",
         "Multi",
         "Music"
+        
     ]
     function_select = {
         0 : game,
@@ -505,7 +508,7 @@ def menu():
         2 : sound_settings
     }
 
-    is_music = True
+    is_music = False
     
     has_button_been_pressed = False
     menu_index = 0
