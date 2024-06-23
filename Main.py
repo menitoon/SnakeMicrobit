@@ -491,21 +491,50 @@ def viewer():
                 print("start as player now")
                 return
 
+def mod_changed():
+    global mod
+    
+    mod += 1
+    print("MOD:" + str(mod))
+    mods = {
+        0 : normal,
+        1 : hard
+    }
+    
+    print("MAX MOD ID:" + str(len(mods)-1))
+    if mod > (len(mods)-1):
+        mod = 0
+    # call proper change
+    mods[mod]()
+    # update visual setting
+    select[3] = "mod:" + str(mod)
+
+def normal():
+    print("NORMAL")
+def hard():
+    print("HARD")
+
 # menu
 def menu():
 
     global is_music
+    global mod
+    global select
+    
+    mod = 0
     
     select = [
         "Solo",
         "Multi",
-        "Music"
+        "Music",
+        "Mod:" + str(mod)
         
     ]
     function_select = {
         0 : game,
         1 : multiplayer,
-        2 : sound_settings
+        2 : sound_settings,
+        3 : mod_changed
     }
 
     is_music = False
@@ -539,6 +568,7 @@ def menu():
             
             elif button_b.is_pressed():
                 has_button_been_pressed = True
+                # call new menu type instance(e.g Game, Multi, Music, ect)
                 function_select[menu_index]()
                 music.set_tempo(bpm=150)
                 
