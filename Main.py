@@ -222,7 +222,7 @@ def game(multiplayer=False):
                 send_multiplayer_update(multiplayer)
             time_passed = running_time()
 
-        if button_b.is_pressed() and not has_button_been_pressed:
+        if button_b.is_pressed() and (not has_button_been_pressed) and (not multiplayer):
             return
         if (not button_b.is_pressed()) and (not button_a.is_pressed()):
             has_button_been_pressed = False
